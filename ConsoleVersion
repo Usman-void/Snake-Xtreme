@@ -1,7 +1,15 @@
 INCLUDE Irvine32.inc
 
 .data
-
+sTitle      BYTE "S N A K E   X T R E M E",0
+sSub        BYTE "Console edition - x86 assembly with Irvine32",0
+sL1         BYTE "*  normal food : +1 score, snake grows, game speeds up",0
+sL2         BYTE "X  poison food : -1 score, snake shrinks",0
+sL3         BYTE "Arrows / WASD steer     P pause     Esc end game",0
+sStart      BYTE "Press any key to start...",0
+sScore      BYTE "Score: ",0
+sLen        BYTE "   Length: ",0
+sBest       BYTE "   Best: ",0
 
 .code
 main PROC
