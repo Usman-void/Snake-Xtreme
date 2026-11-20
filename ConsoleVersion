@@ -12,6 +12,19 @@ sLen        BYTE "   Length: ",0
 sBest       BYTE "   Best: ",0
 
 .code
+
+PutCh PROC USES eax edx x:DWORD, y:DWORD, chr:DWORD, col:DWORD
+    mov  eax, col
+    call SetTextColor
+    mov  dl, BYTE PTR x
+    mov  dh, BYTE PTR y
+    call Gotoxy
+    mov  eax, chr
+    call WriteChar
+    ret
+PutCh ENDP
+
+
 main PROC
 
 
