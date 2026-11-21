@@ -1,0 +1,51 @@
+
+
+.data
+; handles filled in at run time
+hInst        DWORD 0
+hMainWnd     DWORD 0
+hNullPen     DWORD 0
+
+; every GDI handle sits in one block so FreeResources can delete them in a loop
+gdiObjs      LABEL DWORD
+brBg         DWORD 0
+brField      DWORD 0
+brField2     DWORD 0
+brBorder     DWORD 0
+brHead       DWORD 0
+brBody       DWORD 0
+brPanel      DWORD 0
+brBtn        DWORD 0
+brBtnSel     DWORD 0
+brFood       DWORD 0, 0, 0
+hFontTitle   DWORD 0
+hFontBig     DWORD 0
+hFontNorm    DWORD 0
+hFontSmall   DWORD 0
+GDI_COUNT    = 16
+
+; ---- screen / UI state ----
+gameState    DWORD STATE_MENU  ; which screen is active (STATE_*)
+menuSel      DWORD 0  ; highlighted button on the main menu
+overSel      DWORD 0  ; highlighted button on the game over screen
+overStage    DWORD 0  ; 0 = typing the name, 1 = showing buttons
+overStart    DWORD 0  ; time the game ended (stops stray keys entering the name)
+rankResult   DWORD 0  ; rank achieved by the last game (0 = none)
+nameLen      DWORD 0  ; characters typed into the name box
+seed         DWORD 12345  ; state of the random number generator
+
+; ---- snake ----
+snakeX       BYTE MAX_LEN dup(0)  ; x of every segment, index 0 = head
+snakeY       BYTE MAX_LEN dup(0)  ; y of every segment
+snakeLen     DWORD 0  ; current number of segments
+dirNow       DWORD DIR_RIGHT  ; direction used by the last move
+dirNew       DWORD DIR_RIGHT  ; direction requested by the player
+dxTbl        SDWORD 0, 1, 0, -1  ; x step for up, right, down, left
+dyTbl        SDWORD -1, 0, 1, 0  ; y step for up, right, down, left
+tailX        DWORD 0  ; cell the tail just left (used to grow the snake)
+tailY        DWORD 0
+
+; ---- food: one slot per type ----
+foodX        DWORD NUM_FOOD dup(0)
+foodY        DWORD NUM_FOOD dup(0)
+foodOn       DWORD NUM_FOOD dup(0)  ; 1 = this food is currently on the field
