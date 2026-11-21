@@ -24,6 +24,140 @@ PutCh PROC USES eax edx x:DWORD, y:DWORD, chr:DWORD, col:DWORD
     ret
 PutCh ENDP
 
+;  PutStr - write a zero-terminated string at column x, row y in a colour(lengthens the snake)
+
+PutStr PROC USES eax edx x:DWORD, y:DWORD, pStr:DWORD, col:DWORD
+    mov  eax, col
+    call SetTextColor
+    mov  dl, BYTE PTR x
+    mov  dh, BYTE PTR y
+    call Gotoxy
+    mov  edx, pStr
+    call WriteString
+    ret
+PutStr ENDP
+
+CellFree PROC USES ebx ecx
+    mov  ecx, snakeLen
+    xor  ebx, ebx
+cfSnake:
+    movzx eax, snakeX[ebx]
+    cmp  eax, esi
+    jne  cfSnakeNext
+    movzx eax, snakeY[ebx]
+    cmp  eax, edi
+    je   cfBusy
+cfSnakeNext:
+    inc  ebx
+    loop cfSnake
+    xor  ebx, ebx
+cfFood:
+    cmp  ebx, NUM_FOOD
+    jae  cfFree
+    cmp  foodX[ebx * 4], esi
+    jne  cfFoodNext
+    cmp  foodY[ebx * 4], edi
+    je   cfBusy
+cfFoodNext:
+    inc  ebx
+    jmp  cfFood
+cfFree:
+    mov  eax, 1
+    ret
+cfBusy:
+    xor  eax, eax
+    ret
+CellFree ENDP
+
+;  SpawnFood - in: EBX = food type. Picks a random free cell inside the
+;  walls, stores it and draws the food.
+
+SpawnFood PROC USES eax esi edi
+sfRetry:
+    mov  eax, FIELD_W - 2
+    call RandomRange                       ; EAX = 0 .. FIELD_W-3
+    inc  eax
+    mov  esi, eax
+    mov  eax, FIELD_H - 2
+    call RandomRange
+    inc  eax
+    mov  edi, eax
+    call CellFree
+    cmp  eax, 0
+    je   sfRetry
+    mov  foodX[ebx * 4], esi
+    mov  foodY[ebx * 4], edi
+    cmp  ebx, FOOD_NORMAL
+    jne  sfPoison
+    INVOKE PutCh, esi, edi, '*', yellow
+    ret
+sfPoison:
+    INVOKE PutCh, esi, edi, 'X', lightRed
+    ret
+SpawnFood ENDP
+
+;  EatFood - in: EBX = type of the food just eaten
+;  Normal: +1 score, grow into the old tail cell, speed up, respawn.
+;  Poison: -1 score (not below 0), shrink (not below MIN_LEN), respawn.
+
+EatFood PROC USES eax ecx edx
+    cmp  ebx, FOOD_NORMAL
+    jne  efPoison
+    inc  score
+    mov  eax, snakeLen
+    cmp  eax, MAX_LEN
+    jae  efSpawn
+    mov  ecx, tailX                        ; the old tail cell becomes the new last segment
+    mov  snakeX[eax], cl
+    mov  ecx, tailY
+    mov  snakeY[eax], cl
+    inc  snakeLen
+    INVOKE PutCh, tailX, tailY, 'o', green
+    cmp  delayMs, DELAY_MIN
+    jbe  efSpawn
+    sub  delayMs, DELAY_STEP
+efSpawn:
+    call SpawnFood
+    ret
+efPoison:
+    cmp  score, 0
+    je   efShrink
+    dec  score
+efShrink:
+    cmp  snakeLen, MIN_LEN
+    jbe  efPoisonSpawn
+    dec  snakeLen
+    mov  eax, snakeLen                     ; the removed segment must be erased
+    movzx ecx, snakeX[eax]
+    movzx edx, snakeY[eax]
+    INVOKE PutCh, ecx, edx, ' ', white
+efPoisonSpawn:
+    call SpawnFood
+    ret
+EatFood ENDP
+
+
+;  Food checking algorithm
+
+CheckFood PROC USES eax ebx ecx edx
+    movzx ecx, snakeX
+    movzx edx, snakeY
+    xor  ebx, ebx
+ckLoop:
+    cmp  ebx, NUM_FOOD
+    jae  ckDone
+    cmp  foodX[ebx * 4], ecx
+    jne  ckNext
+    cmp  foodY[ebx * 4], edx
+    jne  ckNext
+    call EatFood                           ; replacement food spawns
+ckNext:
+    inc  ebx
+    jmp  ckLoop
+ckDone:
+    ret
+CheckFood ENDP
+
 
 main PROC
 
